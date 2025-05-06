@@ -1,0 +1,68 @@
+/* Mini Calendário - Versão Compacta Sem Scroll */
+.dashboard-card.calendar-container {
+    padding: 15px;
+    overflow: visible; /* Remove qualquer overflow */
+}
+
+#miniCalendar {
+    width: 100%;
+    height: auto; /* Altura automática */
+}
+
+#miniCalendar .fc {
+    width: 100%;
+    font-size: 0.85em; /* Reduz fonte para caber mais */
+}
+
+#miniCalendar .fc-header-toolbar {
+    margin-bottom: 0.5em !important;
+    padding: 0 5px;
+}
+
+#miniCalendar .fc-view-harness {
+    height: auto !important; /* Altura automática */
+}
+
+#miniCalendar .fc-daygrid-day-frame {
+    min-height: 30px !important; /* Reduz altura das células */
+    padding: 1px;
+}
+
+#miniCalendar .fc-daygrid-day-events {
+    margin: 0;
+    min-height: 0;
+}
+
+#miniCalendar .fc-event {
+    margin: 1px 0;
+    padding: 1px 3px;
+    font-size: 0.75em;
+    line-height: 1.1;
+    cursor: pointer;
+}
+
+#miniCalendar .fc-event-main {
+    display: flex;
+    align-items: center;
+}
+
+#miniCalendar .fc-event-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+}
+
+#miniCalendar .fc-daygrid-event-dot {
+    margin: 0 3px 0 0;
+}
+
+/* Ajusta o cabeçalho para ficar mais compacto */
+#miniCalendar .fc-toolbar-title {
+    font-size: 1em;
+}
+
+#miniCalendar .fc-button {
+    padding: 0.2em 0.4em;
+    font-size: 0.9em;
+}

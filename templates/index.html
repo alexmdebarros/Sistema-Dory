@@ -6,22 +6,26 @@
     <title>DORY - Dashboard</title>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/sidebar.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/cards.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/mini-calendar.css') }}">
 </head>
 <body>
     <!-- Sidebar -->
     <aside class="sidebar">
-        <div class="logo" style="padding: 0 20px 20px;">
-            <span style="font-size: 24px;">🐠</span>
-            <span style="font-weight: 600;">DORY</span>
+        <div class="logo">
+            <span>🐠</span>
+            <span>DORY</span>
         </div>
         <ul class="sidebar-menu">
             <li><a href="/" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
             <li><a href="/cadastrar"><i class="fas fa-plus-circle"></i> Cadastrar</a></li>
             <li><a href="/eventos"><i class="fas fa-calendar-alt"></i> Eventos</a></li>
+            <li><a href="/calendario"><i class="fas fa-calendar-days"></i> Calendário</a></li>
             <li><a href="/relatorios"><i class="fas fa-chart-bar"></i> Relatórios</a></li>
             <li><a href="/configuracoes"><i class="fas fa-cog"></i> Configurações</a></li>
         </ul>
@@ -34,26 +38,40 @@
             <div class="datetime" id="currentDateTime"></div>
         </div>
 
-        <!-- Cards -->
-        <div class="cards-grid">
-            <div class="event-card">
-                <div class="card-header">
-                    <h3 class="card-title">ICMS - MAIO</h3>
-                    <span class="card-badge">Fiscal</span>
-                </div>
-                <p class="card-date"><i class="far fa-calendar-alt"></i> Vence em 15/05/2024</p>
+        <div class="dashboard-grid">
+            <!-- Mini Calendário -->
+            <div class="dashboard-card calendar-container">
+                <h2><i class="fas fa-calendar-days"></i> Calendário</h2>
+                <div id="miniCalendar"></div>
             </div>
-
-            <div class="event-card">
-                <div class="card-header">
-                    <h3 class="card-title">FGTS</h3>
-                    <span class="card-badge" style="background: var(--danger);">RH</span>
+            
+            <!-- Próximos Eventos -->
+            <div class="dashboard-card">
+                <h2><i class="fas fa-bell"></i> Próximos Eventos</h2>
+                <div class="cards-grid">
+                    {% for evento in eventos[:4] %}
+                    <div class="event-card">
+                        <div class="card-header">
+                            <h3 class="card-title">{{ evento.nome }}</h3>
+                            <span class="card-badge {{ evento.departamento|lower }}">{{ evento.departamento }}</span>
+                        </div>
+                        <p class="card-date">
+                            <i class="far fa-calendar-alt"></i> 
+                            {{ evento.data_vencimento.strftime('%d/%m/%Y') }}
+                            {% if evento.prioridade == 'alta' %}
+                            <span class="priority-high"><i class="fas fa-exclamation-triangle"></i></span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endfor %}
                 </div>
-                <p class="card-date"><i class="far fa-calendar-alt"></i> Vence em 07/05/2024</p>
             </div>
         </div>
     </main>
 
+    <!-- JavaScript -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/pt-br.js'></script>
     <script>
         // Atualiza data e hora
         function updateDateTime() {
@@ -70,6 +88,45 @@
         }
         setInterval(updateDateTime, 1000);
         updateDateTime();
+
+        // Mini Calendário
+        document.addEventListener('DOMContentLoaded', function() {
+            const miniCalendarEl = document.getElementById('miniCalendar');
+            const miniCalendar = new FullCalendar.Calendar(miniCalendarEl, {
+                locale: 'pt-br',
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'title',
+                    right: 'prev,next'
+                },
+                fixedWeekCount: false, // Não força 6 semanas
+                height: 'auto', // Altura automática
+                contentHeight: 'auto',
+                events: '/api/eventos',
+                eventDisplay: 'list-item',
+                dayMaxEvents: 2, // Limita a 2 eventos por dia
+                eventContent: function(arg) {
+                    const tipo = arg.event.extendedProps.tipo;
+                    const icon = {
+                        'imposto': 'file-invoice',
+                        'declaracao': 'file-export',
+                        'trabalhista': 'user-tie',
+                        'sped': 'file-code'
+                    }[tipo] || 'calendar-alt';
+                    
+                    return {
+                        html: `<div class="fc-event-main">
+                            <i class="fas fa-${icon} fc-event-icon"></i>
+                            <span class="fc-event-title">${arg.event.title}</span>
+                        </div>`
+                    };
+                },
+                eventClassNames: function(arg) {
+                    return ['event-mini', 'event-' + arg.event.extendedProps.tipo];
+                }
+            });
+            miniCalendar.render();
+        });
     </script>
 </body>
 </html>

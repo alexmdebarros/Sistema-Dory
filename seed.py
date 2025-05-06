@@ -8,10 +8,10 @@ with app.app_context():
     # Criar eventos de exemplo
     eventos = [
         Evento(
-            nome="ICMS - MAIO/2024",
+            nome="ICMS - MAIO/2025",
             tipo="imposto",
             departamento="fiscal",
-            data_vencimento=datetime(2024, 5, 15),
+            data_vencimento=datetime(2025, 5, 15),
             descricao="ICMS mensal do estado",
             prioridade="alta"
         ),
@@ -19,7 +19,7 @@ with app.app_context():
             nome="FGTS",
             tipo="trabalhista",
             departamento="rh",
-            data_vencimento=datetime(2024, 5, 7),
+            data_vencimento=datetime(2025, 5, 7),
             status="atrasado"
         )
     ]

@@ -81,3 +81,152 @@ body {
 a, button {
     transition: all 0.3s ease;
 }
+
+/* Dashboard */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.dashboard-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.calendar-preview {
+    grid-column: span 2;
+}
+
+#miniCalendar {
+    height: 400px;
+}
+
+.btn-ver-mais {
+    display: inline-block;
+    margin-top: 15px;
+    color: #4361ee;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* Eventos próximos */
+.eventos-list {
+    margin-top: 15px;
+}
+
+.evento-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.evento-item.urgente {
+    border-left: 3px solid #f72585;
+    padding-left: 10px;
+}
+
+.evento-data {
+    background: #4361ee;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-right: 15px;
+    font-weight: bold;
+    min-width: 50px;
+    text-align: center;
+}
+
+.evento-info h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.evento-depto {
+    font-size: 12px;
+    color: #666;
+}
+
+/* Mini Calendário */
+#miniCalendar {
+    margin-top: 15px;
+}
+
+#miniCalendar .fc-header-toolbar {
+    margin-bottom: 10px !important;
+}
+
+#miniCalendar .fc-daygrid-day-frame {
+    min-height: 40px !important;
+}
+
+#miniCalendar .fc-event-mini {
+    font-size: 12px;
+    padding: 2px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#miniCalendar .fc-event-mini i {
+    margin-right: 5px;
+    font-size: 8px;
+}
+
+/* Ajustes de layout */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.calendar-preview {
+    min-height: 400px;
+}
+
+/* Container principal do dashboard */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start; /* Alinha os cards pelo topo */
+}
+
+.dashboard-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    padding: 15px;
+}
+
+/* Ajustes específicos para o mini calendário */
+.calendar-container {
+    position: relative;
+}
+
+/* Estilo compacto para eventos */
+.event-mini {
+    border-left-width: 2px !important;
+}
+
+/* Ícones menores nos eventos */
+.fc-event-icon {
+    font-size: 0.8em;
+    margin-right: 3px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    #miniCalendar .fc-toolbar-title {
+        font-size: 0.9em;
+    }
+}
