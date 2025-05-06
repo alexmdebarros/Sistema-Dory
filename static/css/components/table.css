@@ -1,0 +1,194 @@
+/* Filtros */
+.filters {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.search-box {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+}
+
+.search-box i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 10px 15px 10px 40px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.filter-group select {
+    padding: 10px 15px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    background-color: white;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Tabela */
+.table-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+}
+
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.modern-table th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    text-align: left;
+    padding: 15px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.modern-table td {
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+.modern-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.badge-imposto {
+    background-color: #e6f7ff;
+    color: #1890ff;
+}
+
+.badge-declaracao {
+    background-color: #f6ffed;
+    color: #52c41a;
+}
+
+.badge-trabalhista {
+    background-color: #fff7e6;
+    color: #fa8c16;
+}
+
+.badge-pendente {
+    background-color: #fff2e8;
+    color: #fa541c;
+}
+
+.badge-atrasado {
+    background-color: #fff1f0;
+    color: #f5222d;
+}
+
+.badge-concluido {
+    background-color: #f6ffed;
+    color: #52c41a;
+}
+
+/* Ações */
+.actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-edit, .btn-delete {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+}
+
+.btn-edit {
+    background-color: #e6f7ff;
+    color: #1890ff;
+}
+
+.btn-edit:hover {
+    background-color: #1890ff;
+    color: white;
+}
+
+.btn-delete {
+    background-color: #fff1f0;
+    color: #f5222d;
+}
+
+.btn-delete:hover {
+    background-color: #f5222d;
+    color: white;
+}
+
+/* Paginação */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 20px;
+}
+
+.page-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.page-btn:hover:not(.active):not(:disabled) {
+    background-color: #f8f9fa;
+}
+
+.page-btn.active {
+    background-color: #4361ee;
+    color: white;
+    border-color: #4361ee;
+}
+
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-complete {
+    background-color: #e6ffe6;
+    color: #2ecc71;
+    border: none;
+    padding: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-complete:hover {
+    background-color: #2ecc71;
+    color: white;
+}

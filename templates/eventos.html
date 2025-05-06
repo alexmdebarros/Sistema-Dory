@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventos - DORY</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/table.css') }}">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo" style="padding: 0 20px 20px;">
+            <span style="font-size: 24px;">🐠</span>
+            <span style="font-weight: 600;">DORY</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="/"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="/cadastrar"><i class="fas fa-plus-circle"></i> Cadastrar</a></li>
+            <li><a href="/eventos" class="active"><i class="fas fa-calendar-alt"></i> Eventos</a></li>
+            <li><a href="/relatorios"><i class="fas fa-chart-bar"></i> Relatórios</a></li>
+            <li><a href="/configuracoes"><i class="fas fa-cog"></i> Configurações</a></li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="header">
+            <h1>Lista de Eventos</h1>
+            <div class="datetime" id="currentDateTime"></div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filters">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Pesquisar eventos...">
+            </div>
+            <div class="filter-group">
+                <select id="filter-department">
+                    <option value="">Todos departamentos</option>
+                    <option value="fiscal">Fiscal</option>
+                    <option value="contabil">Contábil</option>
+                    <option value="rh">RH</option>
+                    <option value="financeiro">Financeiro</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <select id="filter-status">
+                    <option value="">Todos status</option>
+                    <option value="pendente">Pendente</option>
+                    <option value="concluido">Concluído</option>
+                    <option value="atrasado">Atrasado</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tabela de Eventos -->
+        <div class="table-container">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Tipo</th>
+                        <th>Departamento</th>
+                        <th>Vencimento</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for evento in eventos %}
+                    <tr>
+                        <td>{{ evento.nome }}</td>
+                        <td><span class="badge badge-{{ evento.tipo }}">{{ evento.tipo|capitalize }}</span></td>
+                        <td>{{ evento.departamento|capitalize }}</td>
+                        <td>{{ evento.data_vencimento.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <span class="badge badge-{{ evento.status }}">
+                                {{ evento.status|capitalize }}
+                            </span>
+                        </td>
+                        <td class="actions">
+                            {% if evento.status != 'concluido' %}
+                            <form action="{{ url_for('concluir', id=evento.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn-complete" title="Marcar como concluído">
+                                    <i class="fas fa-check-circle"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                            
+                            <a href="{{ url_for('editar', id=evento.id) }}" class="btn-edit" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            
+                            <button class="btn-delete" onclick="confirmarExclusao({{ evento.id }})" title="Excluir">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginação -->
+        <div class="pagination">
+            <button class="page-btn" disabled><i class="fas fa-chevron-left"></i></button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </main>
+
+    <script>
+        // Atualiza data e hora
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('currentDateTime').textContent = 
+                now.toLocaleDateString('pt-BR', { 
+                    weekday: 'long', 
+                    day: '2-digit', 
+                    month: 'long', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // Confirmação de exclusão
+        function confirmarExclusao(id) {
+            if (confirm('Tem certeza que deseja excluir este evento?')) {
+                window.location.href = `/excluir/${id}`;
+            }
+        }
+
+        // Filtro de pesquisa
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('.modern-table tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>

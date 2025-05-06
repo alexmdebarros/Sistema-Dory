@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DORY - Dashboard</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/cards.css') }}">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo" style="padding: 0 20px 20px;">
+            <span style="font-size: 24px;">🐠</span>
+            <span style="font-weight: 600;">DORY</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="/" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="/cadastrar"><i class="fas fa-plus-circle"></i> Cadastrar</a></li>
+            <li><a href="/eventos"><i class="fas fa-calendar-alt"></i> Eventos</a></li>
+            <li><a href="/relatorios"><i class="fas fa-chart-bar"></i> Relatórios</a></li>
+            <li><a href="/configuracoes"><i class="fas fa-cog"></i> Configurações</a></li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="header">
+            <h1>Dashboard</h1>
+            <div class="datetime" id="currentDateTime"></div>
+        </div>
+
+        <!-- Cards -->
+        <div class="cards-grid">
+            <div class="event-card">
+                <div class="card-header">
+                    <h3 class="card-title">ICMS - MAIO</h3>
+                    <span class="card-badge">Fiscal</span>
+                </div>
+                <p class="card-date"><i class="far fa-calendar-alt"></i> Vence em 15/05/2024</p>
+            </div>
+
+            <div class="event-card">
+                <div class="card-header">
+                    <h3 class="card-title">FGTS</h3>
+                    <span class="card-badge" style="background: var(--danger);">RH</span>
+                </div>
+                <p class="card-date"><i class="far fa-calendar-alt"></i> Vence em 07/05/2024</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Atualiza data e hora
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('currentDateTime').textContent = 
+                now.toLocaleDateString('pt-BR', { 
+                    weekday: 'long', 
+                    day: '2-digit', 
+                    month: 'long', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+    </script>
+</body>
+</html>
