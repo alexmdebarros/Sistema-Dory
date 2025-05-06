@@ -10,6 +10,62 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/sidebar.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/cadastro.css') }}">
+    <style>
+        /* Estilos adicionais para a seção de recorrência */
+        .recurrence-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        #recurrence-options {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .recurrence-section .form-group {
+            margin-bottom: 15px;
+        }
+
+        .recurrence-section label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .recurrence-section input[type="checkbox"] {
+            margin: 0;
+            width: auto;
+        }
+
+        .recurrence-section input[type="number"] {
+            width: 60px;
+            padding: 8px;
+            margin-left: 10px;
+        }
+
+        .hint {
+            display: block;
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-top: 5px;
+            margin-left: 28px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .recurrence-section {
+                padding: 15px;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -33,7 +89,7 @@
             <h1>Cadastrar Evento</h1>
             <div class="datetime" id="currentDateTime"></div>
         </div>
-
+        
         <div class="form-container">
             <form method="POST" action="/cadastrar" class="modern-form">
                 <div class="form-row">
@@ -84,6 +140,33 @@
                     </div>
                 </div>
 
+                <!-- Seção de Recorrência -->
+                <div class="recurrence-section">
+                    <div class="form-group">
+                        <label for="repetir_mensal">
+                            <input type="checkbox" id="repetir_mensal" name="repetir_mensal"> 
+                            <i class="fas fa-redo"></i> Repetir mensalmente
+                        </label>
+                    </div>
+
+                    <div id="recurrence-options" style="display: none;">
+                        <div class="form-group">
+                            <label>
+                                <i class="fas fa-calendar-alt"></i> Número de meses:
+                                <input type="number" id="meses_repeticao" name="meses_repeticao" min="1" max="60" value="12">
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="antecipar_dia_util">
+                                <input type="checkbox" id="antecipar_dia_util" name="antecipar_dia_util"> 
+                                <i class="fas fa-calendar-check"></i> Ajustar para dia útil
+                            </label>
+                            <small class="hint">(Antecipa para o último dia útil se cair em fim de semana/feriado)</small>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="descricao"><i class="fas fa-align-left"></i> Descrição (Opcional)</label>
                     <textarea id="descricao" name="descricao" rows="3" placeholder="Detalhes importantes sobre o evento..."></textarea>
@@ -102,6 +185,15 @@
     </main>
 
     <script>
+        // Mostra/oculta as opções de recorrência
+        document.getElementById('repetir_mensal').addEventListener('change', function() {
+            const options = document.getElementById('recurrence-options');
+            options.style.display = this.checked ? 'block' : 'none';
+            
+            // Ativa/desativa o campo de meses
+            document.getElementById('meses_repeticao').disabled = !this.checked;
+        });
+
         // Atualiza data e hora
         function updateDateTime() {
             const now = new Date();
@@ -115,8 +207,16 @@
                     minute: '2-digit'
                 });
         }
-        setInterval(updateDateTime, 1000);
-        updateDateTime();
+
+        // Define a data mínima como hoje
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('data').min = today;
+            
+            // Inicializa o datetime
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+        });
     </script>
 </body>
 </html>

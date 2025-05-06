@@ -66,3 +66,38 @@
     padding: 0.2em 0.4em;
     font-size: 0.9em;
 }
+
+/* Limitar tamanho dos eventos no mini-calendário */
+#miniCalendar .fc-daygrid-day-events {
+    margin: 0;
+    max-height: 60px; /* Altura máxima por célula */
+    overflow: hidden; /* Corta eventos que excederem */
+}
+
+#miniCalendar .fc-event {
+    margin: 2px 0;
+    padding: 2px 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#miniCalendar .fc-event-main {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+#miniCalendar .fc-event-icon {
+    font-size: 10px;
+}
+
+/* Ajustar altura das células */
+#miniCalendar .fc-daygrid-day-frame {
+    min-height: 40px; /* Altura mínima para dias sem eventos */
+}
+
+#miniCalendar .fc-event.urgente {
+    border-left: 3px solid #e74c3c;
+}

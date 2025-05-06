@@ -1,13 +1,33 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
+from flask_migrate import Migrate
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///eventos.db'
 app.config['SECRET_KEY'] = 'sua_chave_secreta_aqui'
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
-# Modelo de Dados
+# Lista de feriados nacionais e locais (Maringá/PR)
+feriados_brasil = [
+    datetime(2025, 1, 1),   # Confraternização Universal
+    datetime(2025, 4, 18),  # Paixão de Cristo
+    datetime(2025, 4, 21),  # Tiradentes
+    datetime(2025, 5, 1),   # Dia do Trabalho
+    datetime(2025, 9, 7),   # Independência do Brasil
+    datetime(2025, 10, 12), # Nossa Senhora Aparecida
+    datetime(2025, 11, 2),  # Finados
+    datetime(2025, 11, 15), # Proclamação da República
+    datetime(2025, 11, 20), # Dia da Consciência Negra
+    datetime(2025, 12, 25), # Natal
+    datetime(2025, 12, 19), # Emancipação Política do Paraná
+    datetime(2025, 5, 12),  # Aniversário de Maringá
+    datetime(2025, 8, 15),  # Nossa Senhora da Glória (Padroeira)
+]
+
 class Evento(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
@@ -18,11 +38,21 @@ class Evento(db.Model):
     prioridade = db.Column(db.String(20), default='normal')
     status = db.Column(db.String(20), default='pendente')
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    repetir_mensal = db.Column(db.Boolean, default=False)
+    antecipar_dia_util = db.Column(db.Boolean, default=False)
+    data_fim_repeticao = db.Column(db.DateTime)
+    evento_pai_id = db.Column(db.Integer, db.ForeignKey('evento.id'))
+    
 
     def __repr__(self):
         return f'<Evento {self.nome}>'
 
-# Rotas
+def ajustar_dia_util(data):
+    """Ajusta a data para o último dia útil se cair em fim de semana ou feriado"""
+    while data.weekday() >= 5 or data.date() in [f.date() for f in feriados_brasil]:
+        data -= timedelta(days=1)
+    return data
+
 @app.route("/")
 def home():
     eventos = Evento.query.order_by(Evento.data_vencimento).limit(5).all()
@@ -31,17 +61,119 @@ def home():
 @app.route("/cadastrar", methods=['GET', 'POST'])
 def cadastrar():
     if request.method == 'POST':
-        novo_evento = Evento(
-            nome=request.form['nome'],
-            tipo=request.form['tipo'],
-            departamento=request.form['departamento'],
-            data_vencimento=datetime.strptime(request.form['data'], '%Y-%m-%d'),
-            descricao=request.form['descricao'],
-            prioridade=request.form.get('prioridade', 'normal')
-        )
-        db.session.add(novo_evento)
-        db.session.commit()
-        return redirect(url_for('eventos'))
+        # Capturar dados do formulário
+        form_data = {
+            'nome': request.form['nome'],
+            'tipo': request.form['tipo'],
+            'departamento': request.form['departamento'],
+            'data': request.form['data'],
+            'descricao': request.form.get('descricao', ''),
+            'prioridade': request.form.get('prioridade', 'normal'),
+            'repetir_mensal': 'repetir_mensal' in request.form,
+            'antecipar_dia_util': 'antecipar_dia_util' in request.form,
+            'meses_repeticao': int(request.form.get('meses_repeticao', 12))
+        }
+
+        try:
+            data_vencimento = datetime.strptime(form_data['data'], '%Y-%m-%d')
+        except ValueError:
+            flash('⚠️ Formato de data inválido! Use o formato AAAA-MM-DD', 'error')
+            return render_template("cadastrar.html", form_data=form_data)
+
+        # Gerar lista de datas para verificação
+        dates_to_check = []
+        if form_data['repetir_mensal']:
+            # Verificar evento pai
+            dates_to_check.append(data_vencimento)
+            
+            # Gerar datas dos eventos filhos
+            for i in range(form_data['meses_repeticao']):
+                nova_data = data_vencimento + relativedelta(months=+i)
+                if form_data['antecipar_dia_util']:
+                    nova_data = ajustar_dia_util(nova_data)
+                dates_to_check.append(nova_data)
+        else:
+            # Ajustar data única se necessário
+            if form_data['antecipar_dia_util']:
+                data_vencimento = ajustar_dia_util(data_vencimento)
+            dates_to_check.append(data_vencimento)
+
+        # Verificar duplicatas
+        existing_dates = []
+        for date in dates_to_check:
+            exists = Evento.query.filter_by(
+                nome=form_data['nome'],
+                tipo=form_data['tipo'],
+                departamento=form_data['departamento'],
+                data_vencimento=date
+            ).first()
+            
+            if exists:
+                existing_dates.append(date.strftime('%d/%m/%Y'))
+
+        if existing_dates:
+            flash(f'⚠️ Evento já existe nas datas: {", ".join(existing_dates)}', 'error')
+            return render_template("cadastrar.html", form_data=form_data)
+
+        # Criar eventos
+        eventos = []
+        evento_pai = None
+
+        try:
+            if form_data['repetir_mensal']:
+                # Criar evento pai
+                evento_pai = Evento(
+                    nome=form_data['nome'],
+                    tipo=form_data['tipo'],
+                    departamento=form_data['departamento'],
+                    data_vencimento=data_vencimento,
+                    descricao=form_data['descricao'],
+                    prioridade=form_data['prioridade'],
+                    repetir_mensal=True,
+                    antecipar_dia_util=form_data['antecipar_dia_util'],
+                    data_fim_repeticao=data_vencimento + relativedelta(months=+form_data['meses_repeticao'])
+                )
+                db.session.add(evento_pai)
+                db.session.commit()
+
+                # Criar eventos filhos
+                for i in range(form_data['meses_repeticao']):
+                    nova_data = data_vencimento + relativedelta(months=+i)
+                    if form_data['antecipar_dia_util']:
+                        nova_data = ajustar_dia_util(nova_data)
+
+                    eventos.append(Evento(
+                        nome=f"{form_data['nome']} ({nova_data.strftime('%m/%Y')})",
+                        tipo=form_data['tipo'],
+                        departamento=form_data['departamento'],
+                        data_vencimento=nova_data,
+                        descricao=form_data['descricao'],
+                        prioridade=form_data['prioridade'],
+                        repetir_mensal=True,
+                        antecipar_dia_util=form_data['antecipar_dia_util'],
+                        evento_pai_id=evento_pai.id
+                    ))
+            else:
+                # Criar evento único
+                eventos.append(Evento(
+                    nome=form_data['nome'],
+                    tipo=form_data['tipo'],
+                    departamento=form_data['departamento'],
+                    data_vencimento=data_vencimento,
+                    descricao=form_data['descricao'],
+                    prioridade=form_data['prioridade']
+                ))
+
+            db.session.bulk_save_objects(eventos)
+            db.session.commit()
+            flash('✅ Evento cadastrado com sucesso!', 'success')
+            return redirect(url_for('eventos'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'⚠️ Erro no cadastro: {str(e)}', 'error')
+            return render_template("cadastrar.html", form_data=form_data)
+
     return render_template("cadastrar.html")
 
 @app.route("/eventos")
@@ -52,21 +184,41 @@ def eventos():
 @app.route("/editar/<int:id>", methods=['GET', 'POST'])
 def editar(id):
     evento = Evento.query.get_or_404(id)
+    
     if request.method == 'POST':
-        evento.nome = request.form['nome']
-        evento.tipo = request.form['tipo']
-        evento.departamento = request.form['departamento']
-        evento.data_vencimento = datetime.strptime(request.form['data'], '%Y-%m-%d')
-        evento.descricao = request.form['descricao']
-        evento.prioridade = request.form.get('prioridade', 'normal')
+        editar_todos = request.form.get('editar_todos') == 'on'
+        
+        if editar_todos and evento.evento_pai_id:
+            eventos_serie = Evento.query.filter_by(evento_pai_id=evento.evento_pai_id).all()
+            for ev in eventos_serie:
+                if ev.data_vencimento >= evento.data_vencimento:
+                    ev.nome = request.form['nome'].split(' (')[0] + f" ({ev.data_vencimento.strftime('%m/%Y')})"
+                    ev.tipo = request.form['tipo']
+                    ev.departamento = request.form['departamento']
+                    ev.descricao = request.form['descricao']
+                    ev.prioridade = request.form.get('prioridade', 'normal')
+        else:
+            evento.nome = request.form['nome']
+            evento.tipo = request.form['tipo']
+            evento.departamento = request.form['departamento']
+            evento.descricao = request.form['descricao']
+            evento.prioridade = request.form.get('prioridade', 'normal')
+        
         db.session.commit()
         return redirect(url_for('eventos'))
+    
     return render_template("editar.html", evento=evento)
 
 @app.route("/excluir/<int:id>")
 def excluir(id):
     evento = Evento.query.get_or_404(id)
-    db.session.delete(evento)
+    excluir_todos = request.args.get('todos', 'false') == 'true'
+    
+    if excluir_todos and evento.evento_pai_id:
+        Evento.query.filter_by(evento_pai_id=evento.evento_pai_id).delete()
+    else:
+        db.session.delete(evento)
+    
     db.session.commit()
     return redirect(url_for('eventos'))
 
@@ -88,9 +240,7 @@ def api_eventos():
         'id': e.id,
         'title': e.nome,
         'start': e.data_vencimento.strftime('%Y-%m-%d'),
-        'color': '#4361ee' if e.tipo == 'imposto' else 
-                '#2ecc71' if e.tipo == 'declaracao' else
-                '#e67e22',
+        'color': '#4361ee' if e.tipo == 'imposto' else '#2ecc71' if e.tipo == 'declaracao' else '#e67e22',
         'extendedProps': {
             'tipo': e.tipo,
             'departamento': e.departamento,
@@ -99,14 +249,6 @@ def api_eventos():
         }
     } for e in eventos]
     return jsonify(eventos_json)
-
-@app.route("/relatorios")
-def relatorios():
-    return render_template("relatorios.html")
-
-@app.route("/configuracoes")
-def configuracoes():
-    return render_template("configuracoes.html")
 
 if __name__ == "__main__":
     with app.app_context():
