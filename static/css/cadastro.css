@@ -46,6 +46,7 @@
     border-radius: 6px;
     font-family: 'Poppins', sans-serif;
     transition: all 0.3s;
+    box-sizing: border-box; /* Adicionado para melhor controle de dimensões */
 }
 
 .form-group input:focus,
