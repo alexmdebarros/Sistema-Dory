@@ -66,7 +66,7 @@ def cadastrar():
             'nome': request.form['nome'],
             'tipo': request.form['tipo'],
             'departamento': request.form['departamento'],
-            'data': request.form['data'],
+            'data': request.form['data_vencimento'],
             'descricao': request.form.get('descricao', ''),
             'prioridade': request.form.get('prioridade', 'normal'),
             'repetir_mensal': 'repetir_mensal' in request.form,
@@ -249,6 +249,31 @@ def api_eventos():
         }
     } for e in eventos]
     return jsonify(eventos_json)
+
+@app.route("/api/notificacoes")
+def api_notificacoes():
+    hoje = datetime.utcnow().date()
+    amanha = hoje + timedelta(days=1)
+    
+    # Busca eventos que vencem hoje ou amanhã
+    eventos = Evento.query.filter(
+        db.or_(
+            db.func.date(Evento.data_vencimento) == hoje,
+            db.func.date(Evento.data_vencimento) == amanha
+        ),
+        Evento.status != 'concluido'
+    ).order_by(Evento.data_vencimento).all()
+
+    notificacoes = [{
+        'id': e.id,
+        'titulo': f"Evento: {e.nome}",
+        'mensagem': f"Vence {'hoje' if e.data_vencimento.date() == hoje else 'amanhã'} - {e.departamento}",
+        'tipo': e.tipo,
+        'prioridade': e.prioridade,
+        'urgente': e.data_vencimento.date() == hoje
+    } for e in eventos]
+
+    return jsonify(notificacoes)
 
 if __name__ == "__main__":
     with app.app_context():

@@ -164,6 +164,14 @@
             updateDateTime();
             setInterval(updateDateTime, 1000);
         });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('data_vencimento').min = today;
+            
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+        });
     </script>
 </body>
 </html>

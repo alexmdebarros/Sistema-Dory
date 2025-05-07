@@ -70,6 +70,8 @@
         </div>
     </main>
 
+    <div class="notification-container" id="notificationContainer"></div>
+
     <!-- JavaScript -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/pt-br.js'></script>
@@ -128,6 +130,55 @@
             });
             miniCalendar.render();
         });
+    </script>
+
+    <script>
+        // Sistema de Notificações
+        function showNotification(notif) {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification ${notif.tipo} ${notif.urgente ? 'urgente' : ''}`;
+            notification.innerHTML = `
+                <div class="notification-header">
+                    <h3 class="notification-title">
+                        <i class="fas fa-${notif.urgente ? 'exclamation-triangle' : 'bell'}"></i>
+                        ${notif.titulo}
+                    </h3>
+                    <button class="notification-close">&times;</button>
+                </div>
+                <p>${notif.mensagem}</p>
+                ${notif.urgente ? '<p class="urgente-text">⚠️ Vencendo hoje!</p>' : ''}
+            `;
+            
+            notification.querySelector('.notification-close').onclick = () => {
+                notification.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => notification.remove(), 300);
+            };
+            
+            container.appendChild(notification);
+            
+            // Remove automaticamente após 8 segundos
+            setTimeout(() => {
+                notification.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 8000);
+        }
+    
+        function checkNotifications() {
+            fetch('/api/notificacoes')
+                .then(response => response.json())
+                .then(notificacoes => {
+                    notificacoes.forEach(notif => {
+                        showNotification(notif);
+                    });
+                });
+        }
+    
+        // Verificar notificações a cada 5 minutos
+        setInterval(checkNotifications, 30000);
+        
+        // Verificar ao carregar a página
+        document.addEventListener('DOMContentLoaded', checkNotifications);
     </script>
 </body>
 </html>
