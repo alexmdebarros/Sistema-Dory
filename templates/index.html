@@ -173,6 +173,51 @@
                     });
                 });
         }
+
+        function verificarNotificacoes() {
+            fetch('/api/notificacoes')
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(notif => {
+                        // Mostra todas as notificações no console para debug
+                        console.log('Notificação:', notif);
+                        
+                        // Cria notificação visual
+                        criarNotificacaoPopup(notif);
+                        
+                        // Opcional: Mostra notificação do sistema
+                        if (Notification.permission === 'granted') {
+                            mostrarNotificacaoSistema(notif);
+                        }
+                    });
+                });
+        }
+        
+        function criarNotificacaoPopup(notif) {
+            const container = document.getElementById('notification-container');
+            const notifElement = document.createElement('div');
+            
+            notifElement.className = `notification ${notif.prioridade}`;
+            notifElement.innerHTML = `
+                <div class="notification-header">
+                    <i class="fas fa-${notif.prioridade === 'urgente' ? 'exclamation-triangle' : 'bell'}"></i>
+                    <h3>${notif.titulo}</h3>
+                    <span class="notification-date">${notif.data_vencimento}</span>
+                    <button class="notification-close">&times;</button>
+                </div>
+                <div class="notification-body">
+                    <p>${notif.mensagem}</p>
+                    ${notif.prioridade === 'urgente' ? '<div class="alert-bar"></div>' : ''}
+                </div>
+            `;
+            
+            container.appendChild(notifElement);
+            
+            // Fecha a notificação após 8 segundos
+            setTimeout(() => {
+                notifElement.remove();
+            }, 8000);
+        }
     
         // Verificar notificações a cada 5 minutos
         setInterval(checkNotifications, 30000);

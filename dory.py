@@ -42,10 +42,53 @@ class Evento(db.Model):
     antecipar_dia_util = db.Column(db.Boolean, default=False)
     data_fim_repeticao = db.Column(db.DateTime)
     evento_pai_id = db.Column(db.Integer, db.ForeignKey('evento.id'))
+    ultima_notificacao = db.Column(db.DateTime)  # Data da última notificação
+    tentativas_notificacao = db.Column(db.Integer, default=0)  # Quantas vezes foi notificado
+    
+    def deve_notificar(self):
+        if self.status == 'concluido':
+            return False
+            
+        agora = datetime.utcnow()
+        dias_atraso = (agora.date() - self.data_vencimento.date()).days
+        
+        # Lógica de frequência de notificação
+        if dias_atraso == 0:  # Vence hoje
+            return True
+        elif dias_atraso == 1:  # 1 dia atrasado
+            return self.tentativas_notificacao < 3
+        elif dias_atraso <= 7:  # 1 semana atrasada
+            return self.tentativas_notificacao < (dias_atraso * 2)
+        else:  # Mais de 1 semana
+            return agora > (self.ultima_notificacao or self.data_vencimento) + timedelta(days=2)
     
 
     def __repr__(self):
         return f'<Evento {self.nome}>'
+    
+    def status_notificacao(self):
+        hoje = datetime.utcnow().date()
+        dias_restantes = (self.data_vencimento.date() - hoje).days
+        
+        if dias_restantes < 0:
+            return {
+                'status': f"ATRASADO {abs(dias_restantes)} dia(s)",
+                'urgente': True,
+                'icone': 'exclamation-triangle'
+            }
+        elif dias_restantes == 0:
+            return {
+                'status': "VENCE HOJE",
+                'urgente': True,
+                'icone': 'exclamation-circle'
+            }
+        elif dias_restantes <= 2:
+            return {
+                'status': f"Vence em {dias_restantes} dias",
+                'urgente': False,
+                'icone': 'bell'
+            }
+        return None
 
 def ajustar_dia_util(data):
     """Ajusta a data para o último dia útil se cair em fim de semana ou feriado"""
@@ -226,7 +269,10 @@ def excluir(id):
 def concluir(id):
     evento = Evento.query.get_or_404(id)
     evento.status = 'concluido'
+    evento.ultima_notificacao = datetime.utcnow()
     db.session.commit()
+    
+    # Redireciona de volta para a página de eventos
     return redirect(url_for('eventos'))
 
 @app.route("/calendario")
@@ -253,25 +299,42 @@ def api_eventos():
 @app.route("/api/notificacoes")
 def api_notificacoes():
     hoje = datetime.utcnow().date()
-    amanha = hoje + timedelta(days=1)
-    
-    # Busca eventos que vencem hoje ou amanhã
-    eventos = Evento.query.filter(
-        db.or_(
-            db.func.date(Evento.data_vencimento) == hoje,
-            db.func.date(Evento.data_vencimento) == amanha
-        ),
-        Evento.status != 'concluido'
-    ).order_by(Evento.data_vencimento).all()
+    data_limite = hoje + timedelta(days=2)  # Agora considera 2 dias à frente
 
-    notificacoes = [{
-        'id': e.id,
-        'titulo': f"Evento: {e.nome}",
-        'mensagem': f"Vence {'hoje' if e.data_vencimento.date() == hoje else 'amanhã'} - {e.departamento}",
-        'tipo': e.tipo,
-        'prioridade': e.prioridade,
-        'urgente': e.data_vencimento.date() == hoje
-    } for e in eventos]
+    # Busca eventos que vencem até 2 dias no futuro (incluindo atrasados)
+    eventos = Evento.query.filter(
+        Evento.data_vencimento <= data_limite,
+        Evento.status != 'concluido'
+    ).order_by(
+        Evento.data_vencimento.asc()
+    ).all()
+
+    notificacoes = []
+    for evento in eventos:
+        dias_restantes = (evento.data_vencimento.date() - hoje).days
+        
+        if dias_restantes < 0:
+            status = f"⚠️ ATRASADO {abs(dias_restantes)} dia(s)"
+            prioridade = 'urgente'
+        elif dias_restantes == 0:
+            status = "⚠️ VENCE HOJE"
+            prioridade = 'urgente'
+        elif dias_restantes == 1:
+            status = "Vence amanhã"
+            prioridade = 'media'
+        else:  # dias_restantes == 2
+            status = "Vence em 2 dias"
+            prioridade = 'baixa'
+
+        notificacoes.append({
+            'id': evento.id,
+            'titulo': f"{evento.tipo.upper()}: {evento.nome}",
+            'mensagem': f"{status} | Depto: {evento.departamento}",
+            'tipo': evento.tipo,
+            'prioridade': prioridade,
+            'dias_restantes': dias_restantes,
+            'data_vencimento': evento.data_vencimento.strftime('%d/%m/%Y')
+        })
 
     return jsonify(notificacoes)
 
